@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Tic Tac Toe</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.8.3/angular.min.js"></script>
+<style>
+  :root{
+  --bg:#f4f6fb;
+  --card:#ffffff;
+  --ink:#28304a;
+  --muted:#838ba8;
+  --line:#e2e6f2;
+  --x-color:#ff6b6b;
+  --x-soft:#ffe3e3;
+  --o-color:#3aa8ff;
+  --o-soft:#dff0ff;
+  --win:#ffc94d;
+  --win-soft:#fff3d6;
+  --radius:22px;
+}
+
+*{
+  box-sizing:border-box;
+}
+
+html,
+body{
+  margin:0;
+  min-height:100%;
+}
+
+body{
+  font-family:'Nunito',sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  display:flex;
+  justify-content:center;
+}
+
+.app-shell{
+  width:100%;
+  max-width:520px;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:24px 18px 40px;
+  gap:18px;
+}
+
+/* ---------- Header ---------- */
+
+.title-block{
+  text-align:center;
+}
+
+h1{
+  font-family:'Fredoka',sans-serif;
+  font-weight:700;
+  font-size:clamp(44px,10vw,64px);
+  line-height:1;
+  margin:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:.25em;
+}
+
+h1 .x{
+  color:var(--x-color);
+}
+
+h1 .o{
+  color:var(--o-color);
+}
+
+.subtitle{
+  margin-top:10px;
+  font-size:18px;
+  font-weight:700;
+  color:var(--muted);
+}
+
+/* ---------- Scoreboard ---------- */
+
+.scoreboard{
+  width:100%;
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:12px;
+}
+
+.score-card{
+  background:var(--card);
+  border-radius:18px;
+  padding:14px 8px;
+  text-align:center;
+  box-shadow:0 4px 14px rgba(40,48,74,.08);
+  border:3px solid transparent;
+  transition:.2s ease;
+  position:relative;
+}
+
+.score-card.lead{
+  border-color:var(--win);
+}
+
+.score-card.is-turn{
+  transform:translateY(-4px);
+}
+
+.crown{
+  position:absolute;
+  top:-18px;
+  left:50%;
+  transform:translateX(-50%);
+}
+
+.crown svg{
+  width:26px;
+  height:26px;
+  display:block;
+}
+
+.score-name{
+  font-family:'Fredoka',sans-serif;
+  font-size:18px;
+  font-weight:600;
+}
+
+.score-card.player-x .score-name{
+  color:var(--x-color);
+}
+
+.score-card.player-o .score-name{
+  color:var(--o-color);
+}
+
+.score-card.draws .score-name{
+  color:var(--muted);
+}
+
+.score-num{
+  font-family:'Fredoka',sans-serif;
+  font-size:40px;
+  font-weight:700;
+  margin-top:4px;
+}
+
+.turn-pip{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:var(--win);
+  display:inline-block;
+  margin-left:5px;
+}
+
+/* ---------- Streak ---------- */
+
+.streak-msg{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  font-size:15px;
+  color:#b4790b;
+  background:var(--win-soft);
+  border-radius:999px;
+  padding:8px 16px;
+  font-weight:700;
+  min-height:20px;
+}
+
+.streak-msg:empty{
+  visibility:hidden;
+}
+
+.streak-icon{
+  width:16px;
+  height:16px;
+  flex-shrink:0;
+}
+
+/* ---------- Status ---------- */
+
+.status-banner{
+  width:100%;
+  text-align:center;
+  border-radius:16px;
+  padding:16px;
+  font-family:'Fredoka',sans-serif;
+  font-weight:700;
+  font-size:22px;
+  background:var(--card);
+  color:var(--ink);
+  box-shadow:0 4px 14px rgba(40,48,74,.08);
+}
+
+.status-banner.turn-x{
+  background:var(--x-soft);
+  color:#b6402f;
+}
+
+.status-banner.turn-o{
+  background:var(--o-soft);
+  color:#1f6fa8;
+}
+
+.status-banner.is-win{
+  background:var(--win-soft);
+  color:#9c6c05;
+}
+
+.status-banner.is-draw{
+  background:var(--line);
+  color:var(--muted);
+}
+
+/* ---------- Board ---------- */
+
+.board-wrap{
+  position:relative;
+}
+
+.board{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  grid-template-rows:repeat(3,1fr);
+  gap:10px;
+  background:var(--line);
+  border-radius:var(--radius);
+  padding:10px;
+  box-shadow:0 8px 24px rgba(40,48,74,.12);
+}
+
+.cell{
+  background:var(--card);
+  border:none;
+  border-radius:16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  transition:.15s ease;
+}
+
+.cell:not(:disabled):hover{
+  background:#f0f2fa;
+}
+
+.cell:not(:disabled):active{
+  transform:scale(.95);
+}
+
+.cell:disabled{
+  cursor:default;
+}
+
+.cell:focus-visible{
+  outline:4px solid var(--win);
+  outline-offset:-4px;
+}
+
+.cell.cell-win{
+  background:var(--win-soft);
+}
+
+.cell.cell-win.player-x{
+  background:var(--x-soft);
+}
+
+.cell.cell-win.player-o{
+  background:var(--o-soft);
+}
+
+/* ---------- X & O ---------- */
+
+.mark{
+  width:72%;
+  height:72%;
+}
+
+.mark-x line{
+  stroke:var(--x-color);
+  stroke-width:13;
+  stroke-linecap:round;
+  fill:none;
+  stroke-dasharray:80;
+  animation:draw-x .25s ease forwards;
+}
+
+.mark-x line:nth-child(2){
+  animation-delay:.18s;
+}
+
+.mark-o circle{
+  stroke:var(--o-color);
+  stroke-width:13;
+  fill:none;
+  stroke-dasharray:214;
+  transform:rotate(-90deg);
+  transform-origin:50px 50px;
+  animation:draw .32s ease forwards;
+}
+
+@keyframes draw{
+  from{
+    stroke-dashoffset:214;
+  }
+  to{
+    stroke-dashoffset:0;
+  }
+}
+
+@keyframes draw-x{
+  from{
+    stroke-dashoffset:80;
+  }
+  to{
+    stroke-dashoffset:0;
+  }
+}
+
+/* ---------- Winning Line ---------- */
+
+.win-line-svg{
+  position:absolute;
+  inset:10px;
+  pointer-events:none;
+}
+
+.win-stroke{
+  stroke:var(--win);
+  stroke-width:10;
+  stroke-linecap:round;
+  animation:draw-line .45s ease forwards;
+  filter:drop-shadow(0 1px 3px rgba(0,0,0,.15));
+}
+
+@keyframes draw-line{
+  to{
+    stroke-dashoffset:0;
+  }
+}
+
+/* ---------- Controls ---------- */
+
+.controls{
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
+}
+
+.btn-new{
+  width:100%;
+  font-family:'Fredoka',sans-serif;
+  font-size:24px;
+  font-weight:700;
+  background:var(--ink);
+  color:#fff;
+  border:none;
+  border-radius:14px;
+  padding:18px 0;
+  cursor:pointer;
+  transition:.15s ease;
+}
+
+.btn-new:hover{
+  opacity:.9;
+}
+
+.btn-new:active{
+  transform:scale(.98);
+}
+
+.btn-new:focus-visible{
+  outline:4px solid var(--win);
+}
+
+.link-reset{
+  background:none;
+  border:none;
+  color:var(--muted);
+  font-size:15px;
+  font-weight:700;
+  text-decoration:underline;
+  cursor:pointer;
+}
+
+.link-reset:hover{
+  color:var(--ink);
+}
+
+.helper-text{
+  font-size:14px;
+  font-weight:600;
+  color:var(--muted);
+  text-align:center;
+}
+
+/* ---------- Mobile ---------- */
+
+@media (max-width:480px){
+
+  h1{
+    font-size:48px;
+  }
+
+  .score-name{
+    font-size:16px;
+  }
+
+  .score-num{
+    font-size:34px;
+  }
+
+  .status-banner{
+    font-size:20px;
+  }
+
+  .btn-new{
+    font-size:22px;
+  }
+}
+</style>
+</head>
+<body ng-app="ticTacToe" ng-controller="GameCtrl as game">
+
+<div class="app-shell">
+
+  <header class="title-block">
+    <h1><span class="x">X</span><span>vs</span><span class="o">O</span></h1>
+    <p class="subtitle">Take turns tapping a square. Three in a row wins!</p>
+  </header>
+
+  <div class="scoreboard">
+    <div class="score-card player-x" ng-class="{'lead': scores.X > scores.O, 'is-turn': currentPlayer==='X' && !winner && !isDraw}">
+     <span class="crown" ng-if="scores.X > scores.O">
+  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+    <path d="M3 18h18l-1-9-5 4-3-6-3 6-5-4z"
+          fill="#ffc94d"
+          stroke="#b4790b"
+          stroke-width="1.5"/>
+  </svg>
+</span>
+      <div class="score-name">Player X</div>
+      <div class="score-num">{{scores.X}}</div>
+    </div>
+    <div class="score-card draws">
+      <div class="score-name">Draws</div>
+      <div class="score-num">{{scores.draws}}</div>
+    </div>
+    <div class="score-card player-o" ng-class="{'lead': scores.O > scores.X, 'is-turn': currentPlayer==='O' && !winner && !isDraw}">
+  <span class="crown" ng-if="scores.X > scores.O">
+  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+    <path d="M3 18h18l-1-9-5 4-3-6-3 6-5-4z"
+          fill="#ffc94d"
+          stroke="#b4790b"
+          stroke-width="1.5"/>
+  </svg>
+</span>
+      <div class="score-name">Player O</div>
+      <div class="score-num">{{scores.O}}</div>
+    </div>
+  </div>
+
+  <p class="streak-msg">{{streakMessage()}}</p>
+
+  <p class="status-banner"
+     ng-class="{'turn-x': currentPlayer==='X' && !winner && !isDraw,
+                'turn-o': currentPlayer==='O' && !winner && !isDraw,
+                'is-win': winner, 'is-draw': isDraw}"
+     aria-live="polite">{{statusText()}}</p>
+
+  <div class="board-wrap" ng-style="{width: boardSize + 'px', height: boardSize + 'px'}">
+    <div class="board" ng-style="{width: boardSize + 'px', height: boardSize + 'px'}">
+      <button type="button" class="cell"
+              ng-repeat="cell in cells track by $index"
+              ng-click="play($index)"
+              ng-disabled="cell || winner || isDraw"
+              ng-class="{'cell-win': cellInWinLine($index), 'player-x': cell==='X', 'player-o': cell==='O'}"
+              ng-attr-aria-label="Cell {{$index + 1}}, {{cell ? cell : 'empty'}}">
+        <svg ng-if="cell==='X'" viewBox="0 0 100 100" class="mark mark-x">
+          <line x1="22" y1="22" x2="78" y2="78"/>
+          <line x1="78" y1="22" x2="22" y2="78"/>
+        </svg>
+        <svg ng-if="cell==='O'" viewBox="0 0 100 100" class="mark mark-o">
+          <circle cx="50" cy="50" r="34"/>
+        </svg>
+      </button>
+    </div>
+
+    <svg class="win-line-svg" ng-if="winLine" ng-attr-width="{{boardSize - 16}}" ng-attr-height="{{boardSize - 16}}">
+      <line class="win-stroke"
+            ng-attr-x1="{{winLineStyle().x1}}" ng-attr-y1="{{winLineStyle().y1}}"
+            ng-attr-x2="{{winLineStyle().x2}}" ng-attr-y2="{{winLineStyle().y2}}"
+            ng-style="{'stroke-dasharray': winLineLength(), 'stroke-dashoffset': winLineLength()}"/>
+    </svg>
+  </div>
+
+  <div class="controls">
+    <button type="button" class="btn-new" ng-click="reset()">{{winner || isDraw ? 'Play again' : 'Start over'}}</button>
+    <button type="button" class="link-reset" ng-click="resetAll()">Reset scores</button>
+    <p class="helper-text">{{cells.length - emptyCount()}} of 9 squares filled · {{totalGames()}} games played</p>
+  </div>
+
+</div>
+
+<script>
+angular.module('ticTacToe', [])
+.controller('GameCtrl', ['$scope', function($scope){
+
+  var WIN_LINES = [
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
+  ];
+
+  $scope.cells = [null,null,null,null,null,null,null,null,null];
+  $scope.currentPlayer = 'X';
+  $scope.winner = null;
+  $scope.winLine = null;
+  $scope.isDraw = false;
+  $scope.scores = { X: 0, O: 0, draws: 0 };
+  $scope.lastWinner = null;
+  $scope.streak = 0;
+  $scope.boardSize = 320;
+
+  function findWinner(){
+    for (var i = 0; i < WIN_LINES.length; i++){
+      var line = WIN_LINES[i];
+      var a = $scope.cells[line[0]];
+      var b = $scope.cells[line[1]];
+      var c = $scope.cells[line[2]];
+      if (a && a === b && b === c){
+        return { player: a, line: line };
+      }
+    }
+    return null;
+  }
+
+  $scope.play = function(index){
+    if ($scope.cells[index] || $scope.winner || $scope.isDraw) return;
+    $scope.cells[index] = $scope.currentPlayer;
+
+    var result = findWinner();
+    if (result){
+      $scope.winner = result.player;
+      $scope.winLine = result.line;
+      $scope.scores[result.player]++;
+
+      if ($scope.lastWinner === result.player){
+        $scope.streak++;
+      } else {
+        $scope.streak = 1;
+        $scope.lastWinner = result.player;
+      }
+      return;
+    }
+
+    if ($scope.emptyCount() === 0){
+      $scope.isDraw = true;
+      $scope.scores.draws++;
+      $scope.streak = 0;
+      $scope.lastWinner = null;
+      return;
+    }
+
+    $scope.currentPlayer = ($scope.currentPlayer === 'X') ? 'O' : 'X';
+  };
+
+  $scope.reset = function(){
+    $scope.cells = [null,null,null,null,null,null,null,null,null];
+    $scope.currentPlayer = 'X';
+    $scope.winner = null;
+    $scope.winLine = null;
+    $scope.isDraw = false;
+  };
+
+  $scope.resetAll = function(){
+    $scope.reset();
+    $scope.scores = { X: 0, O: 0, draws: 0 };
+    $scope.streak = 0;
+    $scope.lastWinner = null;
+  };
+
+  $scope.emptyCount = function(){
+    var n = 0;
+    for (var i = 0; i < $scope.cells.length; i++){
+      if (!$scope.cells[i]) n++;
+    }
+    return n;
+  };
+
+  $scope.totalGames = function(){
+    return $scope.scores.X + $scope.scores.O + $scope.scores.draws;
+  };
+
+  $scope.statusText = function(){
+    if ($scope.winner) return 'Player ' + $scope.winner + ' wins!';
+    if ($scope.isDraw) return "It's a draw \u2014 nobody gets the point.";
+    return "Player " + $scope.currentPlayer + "'s turn";
+  };
+
+  $scope.streakMessage = function(){
+    if (!$scope.winner) return '';
+    if ($scope.streak >= 2) return '\uD83D\uDD25 Player ' + $scope.winner + ' is on a ' + $scope.streak + '-game winning streak!';
+    return '';
+  };
+
+  $scope.cellInWinLine = function(i){
+    return $scope.winLine && $scope.winLine.indexOf(i) !== -1;
+  };
+
+  // Winning line coordinates, derived from the live board size so the
+  // strike-through always lines up, at any viewport.
+  $scope.winLineStyle = function(){
+    if (!$scope.winLine) return { x1:0, y1:0, x2:0, y2:0 };
+    var size = $scope.boardSize - 16;
+    var cell = size / 3;
+    function center(idx){
+      var col = idx % 3, row = Math.floor(idx / 3);
+      return { x: col * cell + cell / 2, y: row * cell + cell / 2 };
+    }
+    var p1 = center($scope.winLine[0]);
+    var p2 = center($scope.winLine[2]);
+    return { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y };
+  };
+
+  $scope.winLineLength = function(){
+    var c = $scope.winLineStyle();
+    var dx = c.x2 - c.x1, dy = c.y2 - c.y1;
+    return Math.round(Math.sqrt(dx * dx + dy * dy));
+  };
+
+  // ---- Responsiveness handled in JS: the board is re-measured against
+  // the live viewport on load, resize, and orientation change. ----
+  function computeBoardSize(){
+    var w = window.innerWidth;
+    var h = window.innerHeight;
+    var isNarrow = w < 480;
+    var chromeHeight = isNarrow ? 300 : 330;
+    var horizontalPad = isNarrow ? 32 : 48;
+
+    var maxByWidth = w - horizontalPad;
+    var maxByHeight = h - chromeHeight;
+    var size = Math.min(maxByWidth, maxByHeight, 420);
+    size = Math.max(size, 240);
+
+    $scope.boardSize = Math.round(size);
+  }
+
+  computeBoardSize();
+
+  var resizeTimer = null;
+  window.addEventListener('resize', function(){
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function(){
+      computeBoardSize();
+      $scope.$applyAsync();
+    }, 80);
+  });
+  window.addEventListener('orientationchange', function(){
+    setTimeout(function(){
+      computeBoardSize();
+      $scope.$applyAsync();
+    }, 120);
+  });
+
+}]);
+</script>
+
+</body>
+</html>
